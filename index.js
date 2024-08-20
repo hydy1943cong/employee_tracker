@@ -3,6 +3,15 @@ const { Pool } = require('pg');
 const inquirer = require("inquirer");
 const fs = require('fs');
 
+const pool = new Pool({
+    user: 'postgres',
+    host: 'localhost',
+    database: 'employee_db',
+    password: 'jkl1234!',
+    port: 5432, 
+  });
+
+
 const questions = [
     {
         type: 'list',
@@ -17,7 +26,29 @@ function init() {
     .prompt(questions)
     .then((answers) => {
         console.log(answers);
-        
+        switch (answers.action) {
+        case 'View all departments':
+          viewAllDepartments();
+          break;
+        case 'View all roles':
+          viewAllRoles();
+          break;
+        case 'View all employees':
+          viewAllEmployees();
+          break;
+        case 'Add a department':
+          addDepartment();
+          break;
+        case 'Add a role':
+          addRole();
+          break;
+        case 'Add an employee':
+          addEmployee();
+          break;
+        case 'Update an employee role':
+          updateEmployeeRole();
+          break;
+      }
     })
     .catch((error) => {
         if (error.isTtyError) {
@@ -31,3 +62,11 @@ function init() {
 
 // Function call to initialize app
 init();
+
+function viewAllDepartments() {
+    const query = 'SELECT * FROM department';
+    pool.query(query, (err, res) => {
+        console.table(res.rows);
+      init(); 
+    });
+  }
