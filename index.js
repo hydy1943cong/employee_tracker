@@ -17,6 +17,7 @@ function init() {
     .prompt(questions)
     .then((answers) => {
         console.log(answers);
+        
     })
     .catch((error) => {
         if (error.isTtyError) {
