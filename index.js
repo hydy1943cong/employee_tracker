@@ -70,3 +70,20 @@ function viewAllDepartments() {
       init(); 
     });
   }
+
+function viewAllRoles() {
+    const query = 'SELECT * FROM role';
+    pool.query(query, (err, res) => {
+        console.table(res.rows);
+      init(); 
+    });
+  }
+
+
+function viewAllEmployees() {
+    const query = 'SELECT employee.role_id AS "ID", employee.first_name AS "First Name", employee.last_name AS "Last Name", role.title AS "Title",department.name AS "Department", role.salary AS "Salary" FROM employee JOIN role ON employee.role_id = role.id JOIN department ON role.department_id = department.id';
+    pool.query(query, (err, res) => {
+        console.table(res.rows);
+      init(); 
+    });
+  }
