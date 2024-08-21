@@ -215,3 +215,45 @@ function addEmployee() {
     });
   });
 }
+
+
+function updateEmployeeRole() {
+  pool.query('SELECT * FROM employee', (err, employees) => {
+    if (err) throw err;
+    pool.query('SELECT * FROM role', (err, roles) => {
+      if (err) throw err;
+
+      inquirer
+        .prompt([
+          {
+            name: 'employee_id',
+            type: 'list',
+            message: 'Which employee\'s role do you want to update?',
+            choices: employees.rows.map(employee => ({
+              name: `${employee.first_name} ${employee.last_name}`,
+              value: employee.id,
+            })),
+          },
+          {
+            name: 'role_id',
+            type: 'list',
+            message: 'Which role do you want to assign the selected employee?',
+            choices: roles.rows.map(role => ({
+              name: role.title,
+              value: role.id,
+            })),
+          },
+        ])
+        .then(answer => {
+          const query = `UPDATE employee SET role_id = $1 WHERE id = $2`;
+          const values = [answer.role_id, answer.employee_id];
+
+          pool.query(query, values, (err, res) => {
+            if (err) throw err;
+            console.log('Updated employee\'s role.');
+            init(); // Go back to the main menu
+          });
+        });
+    });
+  });
+}
