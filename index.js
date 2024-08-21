@@ -87,3 +87,28 @@ function viewAllEmployees() {
       init(); 
     });
   }
+
+function addDepartment() {
+    inquirer
+    .prompt([
+        {
+            type: 'input',
+            message: 'What is the name of the department?',
+            name: 'departmentName'
+        }
+    ])
+    .then((answer) => {
+        const query = 'INSERT INTO department (name) VALUES ($1)';
+        pool.query(query, [answer.departmentName], (err, res) => {
+            if (err) {
+                console.error(err);
+                return;
+            }
+            console.log(`Added '${answer.departmentName}' to the database`);
+            init();
+        });
+    })
+    .catch((error) => {
+        console.error(error);
+    });
+}
