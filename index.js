@@ -81,7 +81,7 @@ function viewAllRoles() {
 
 
 function viewAllEmployees() {
-    const query = 'SELECT employee.role_id AS "ID", employee.first_name AS "First Name", employee.last_name AS "Last Name", role.title AS "Title",department.name AS "Department", role.salary AS "Salary" FROM employee JOIN role ON employee.role_id = role.id JOIN department ON role.department_id = department.id';
+    const query = `SELECT e.role_id AS "ID", e.first_name AS "First Name", e.last_name AS "Last Name", role.title AS "Title",department.name AS "Department", role.salary AS "Salary", CASE WHEN e.manager_id IS NULL THEN NULL ELSE CONCAT(m.first_name,' ',m.last_name) END AS "Manager" FROM employee e LEFT JOIN role ON e.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employee m ON e.manager_id = m.id`;
     pool.query(query, (err, res) => {
         console.table(res.rows);
       init(); 
