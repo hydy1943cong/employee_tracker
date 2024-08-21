@@ -4,12 +4,13 @@ const inquirer = require("inquirer");
 const fs = require('fs');
 
 const pool = new Pool({
-    user: 'postgres',
-    host: 'localhost',
-    database: 'employee_db',
-    password: 'jkl1234!',
-    port: 5432, 
-  });
+  user: 'postgres',
+  host: 'localhost',
+  database: 'employee_db',
+  password: 'password',
+  port: 5432, 
+});
+
 
 
 const questions = [
@@ -17,7 +18,7 @@ const questions = [
         type: 'list',
         message: ('What would you like to do?'),
         name: 'action',
-        choices: ['View all departments','View all roles','View all employees','Add a department','Add a role','Add an employee','Update an employee role']
+        choices: ['View all departments','View all roles','View all employees','Add a department','Add a role','Add an employee','Update an employee role','View employees by department','View total utilized budget by department']
     }
 ]
 
@@ -48,6 +49,12 @@ function init() {
         case 'Update an employee role':
           updateEmployeeRole();
           break;
+        case 'View employees by department':
+          viewEmployeesByDepartment();
+          break;
+        case 'View total utilized budget by department': 
+          viewBudgetByDepartment();
+          break;
       }
     })
     .catch((error) => {
@@ -60,7 +67,6 @@ function init() {
 
 }
 
-// Function call to initialize app
 init();
 
 function viewAllDepartments() {
@@ -255,5 +261,102 @@ function updateEmployeeRole() {
           });
         });
     });
+  });
+}
+
+function viewEmployeesByDepartment() {
+  const query = 'SELECT * FROM department';
+
+  pool.query(query, (err, res) => {
+      if (err) {
+          console.error(err);
+          return;
+      }
+
+      const departments = res.rows.map(department => ({
+          name: department.name,
+          value: department.id
+      }));
+
+      inquirer.prompt([
+          {
+              type: 'list',
+              name: 'departmentId',
+              message: 'Which department do you want to view?',
+              choices: departments
+          }
+      ])
+      .then(answer => {
+          const query = `
+              SELECT e.id AS "ID", e.first_name AS "First Name", e.last_name AS "Last Name", 
+                     role.title AS "Title", department.name AS "Department"
+              FROM employee e
+              LEFT JOIN role ON e.role_id = role.id
+              LEFT JOIN department ON role.department_id = department.id
+              WHERE department.id = $1
+          `;
+
+          pool.query(query, [answer.departmentId], (err, res) => {
+              if (err) {
+                  console.error(err);
+                  return;
+              }
+
+              console.table(res.rows);
+              init(); 
+          });
+      })
+      .catch(error => {
+          console.error(error);
+      });
+  });
+}
+
+
+function viewBudgetByDepartment() {
+  const query = 'SELECT * FROM department';
+
+  pool.query(query, (err, res) => {
+      if (err) {
+          console.error(err);
+          return;
+      }
+
+      const departments = res.rows.map(department => ({
+          name: department.name,
+          value: department.id
+      }));
+
+      inquirer.prompt([
+          {
+              type: 'list',
+              name: 'departmentId',
+              message: 'Which department do you want to view its total utilized budget?',
+              choices: departments
+          }
+      ])
+      .then(answer => {
+          const query = `
+              SELECT department.name AS "Department", SUM(role.salary) AS "Total Utilized Budget"
+              FROM employee e
+              LEFT JOIN role ON e.role_id = role.id
+              LEFT JOIN department ON role.department_id = department.id
+              WHERE department.id = $1
+              GROUP BY department.name
+          `;
+
+          pool.query(query, [answer.departmentId], (err, res) => {
+              if (err) {
+                  console.error(err);
+                  return;
+              }
+
+              console.table(res.rows);
+              init(); 
+          });
+      })
+      .catch(error => {
+          console.error(error);
+      });
   });
 }
