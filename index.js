@@ -112,3 +112,106 @@ function addDepartment() {
         console.error(error);
     });
 }
+
+function addRole() {
+  const getDepartmentsQuery = 'SELECT id, name FROM department';
+
+  pool.query(getDepartmentsQuery, (err, res) => {
+    if (err) {
+      console.error(err);
+      return;
+    }
+    const departments = res.rows.map(department => ({
+      name: department.name,
+      value: department.id,
+    }));
+
+    inquirer.prompt([
+      {
+        type: 'input',
+        name: 'roleName',
+        message: 'What is the name of the role?',
+      },
+      {
+        type: 'input',
+        name: 'salary',
+        message: 'What is the salary of the role?',
+      },
+      {
+        type: 'list',
+        name: 'departmentId',
+        message: 'Which department does this role belong to?',
+        choices: departments,
+      }
+    ]).then(answers => {
+      const { roleName, salary, departmentId } = answers;
+      const insertRoleQuery = 'INSERT INTO role (title, salary, department_id) VALUES ($1, $2, $3)';
+      pool.query(insertRoleQuery, [roleName, salary, departmentId], (err, res) => {
+        if (err) {
+          console.error(err);
+        } else {
+          console.log(`Added ${roleName} to the database`);
+          init();
+        }
+      });
+    });
+  });
+}
+
+
+function addEmployee() {
+  pool.query('SELECT * FROM role', (err, roles) => {
+    if (err) throw err;
+
+    pool.query('SELECT * FROM employee', (err, employees) => {
+      if (err) throw err;
+
+      inquirer
+        .prompt([
+          {
+            name: 'first_name',
+            type: 'input',
+            message: 'What is the employee\'s first name?',
+          },
+          {
+            name: 'last_name',
+            type: 'input',
+            message: 'What is the employee\'s last name?',
+          },
+          {
+            name: 'role_id',
+            type: 'list',
+            message: 'What is the employee\'s role?',
+            choices: roles.rows.map(role => ({
+              name: role.title,
+              value: role.id,
+            })),
+          },
+          {
+            name: 'manager_id',
+            type: 'list',
+            message: 'Who is the employee\'s manager?',
+            choices: [
+              { name: 'None', value: null },
+              ...employees.rows.map(employee => ({
+                name: `${employee.first_name} ${employee.last_name}`,
+                value: employee.id,
+              })),
+            ],
+          },
+        ])
+        .then(answer => {
+          const query = `
+            INSERT INTO employee (first_name, last_name, role_id, manager_id)
+            VALUES ($1, $2, $3, $4)`;
+          const values = [answer.first_name, answer.last_name, answer.role_id, answer.manager_id];
+
+          pool.query(query, values, (err, res) => {
+            if (err) throw err;
+            console.log(`Added ${answer.first_name} ${answer.last_name} to the database`);
+            init(); 
+          });
+        });
+    });
+  });
+}
